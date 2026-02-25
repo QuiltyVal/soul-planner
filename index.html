@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soul Planner — Gamified Task Manager</title>
+  <meta name="description" content="A gamified task planner where tasks live, decay into purgatory, die, or ascend to heaven.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Score Panel -->
+  <div class="score-panel" id="scorePanel">
+    <div class="score-icon">⚡</div>
+    <div class="score-value" id="scoreValue">0</div>
+    <div class="score-label">SOUL POINTS</div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <header class="app-header">
+      <h1 class="app-title">
+        <span class="title-icon">👻</span>
+        Soul Planner
+        <span class="title-icon">👻</span>
+      </h1>
+      <p class="app-subtitle">Keep your tasks alive... or let them perish</p>
+    </header>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="active">
+        <span class="tab-icon">🔥</span>
+        <span class="tab-label">Active</span>
+      </button>
+      <button class="tab-btn" data-tab="cemetery">
+        <span class="tab-icon">🪦</span>
+        <span class="tab-label">Cemetery</span>
+      </button>
+      <button class="tab-btn" data-tab="heaven">
+        <span class="tab-icon">☁️</span>
+        <span class="tab-label">Heaven</span>
+      </button>
+    </nav>
+
+    <!-- Active Tab -->
+    <div class="tab-content active" id="tab-active">
+      <!-- Active Zone -->
+      <section class="zone zone-active">
+        <div class="zone-header">
+          <div class="zone-dot zone-dot-green"></div>
+          <h2>Active Zone</h2>
+          <span class="zone-count" id="activeCount">0</span>
+        </div>
+        <div class="tasks-list" id="activeTasks">
+          <div class="empty-state" id="activeEmpty">
+            <span class="empty-icon">✨</span>
+            <p>No active tasks. Add one below!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Purgatory Zone -->
+      <section class="zone zone-purgatory">
+        <div class="zone-header">
+          <div class="zone-dot zone-dot-amber"></div>
+          <h2>Purgatory</h2>
+          <span class="zone-count" id="purgatoryCount">0</span>
+        </div>
+        <div class="tasks-list" id="purgatoryTasks">
+          <div class="empty-state" id="purgatoryEmpty">
+            <span class="empty-icon">😌</span>
+            <p>Purgatory is empty. Good job keeping tasks alive!</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add Task -->
+      <section class="zone zone-add">
+        <div class="add-task-row">
+          <input
+            type="text"
+            id="taskInput"
+            class="task-input"
+            placeholder="What's on your soul today?"
+            maxlength="100"
+            autocomplete="off"
+          >
+          <button class="add-btn" id="addBtn" title="Add Task">
+            <span class="add-btn-icon">+</span>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Cemetery Tab -->
+    <div class="tab-content" id="tab-cemetery">
+      <section class="zone zone-cemetery">
+        <div class="zone-header">
+          <div class="zone-dot zone-dot-gray"></div>
+          <h2>Cemetery</h2>
+          <span class="zone-count" id="cemeteryCount">0</span>
+        </div>
+        <div class="cemetery-grid" id="cemeteryGrid">
+          <div class="empty-state" id="cemeteryEmpty">
+            <span class="empty-icon">🪦</span>
+            <p>No fallen tasks... yet.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Heaven Tab -->
+    <div class="tab-content" id="tab-heaven">
+      <section class="zone zone-heaven">
+        <div class="zone-header">
+          <div class="zone-dot zone-dot-gold"></div>
+          <h2>Heaven</h2>
+          <span class="zone-count" id="heavenCount">0</span>
+        </div>
+        <div class="heaven-grid" id="heavenGrid">
+          <div class="empty-state" id="heavenEmpty">
+            <span class="empty-icon">👼</span>
+            <p>Complete tasks to send them to heaven!</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Angel Helper -->
+  <div class="helper helper-angel" id="angelHelper">
+    <div class="speech-bubble angel-bubble" id="angelBubble">
+      <p id="angelMessage">Welcome! Let's get things done! 🌟</p>
+    </div>
+    <div class="helper-avatar angel-avatar" id="angelAvatar">😇</div>
+  </div>
+
+  <!-- Devil Helper -->
+  <div class="helper helper-devil" id="devilHelper">
+    <div class="speech-bubble devil-bubble" id="devilBubble">
+      <p id="devilMessage">I'm watching your tasks... 😈</p>
+    </div>
+    <div class="helper-avatar devil-avatar" id="devilAvatar">😈</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
