@@ -20,6 +20,14 @@
     STORAGE_KEY_SCORE: 'soul_planner_score',
   };
 
+  // --- XP per heat level ---
+  function getXpForHeat(heat) {
+    if (heat > 0.75) return 100;
+    if (heat > 0.5) return 75;
+    if (heat > 0.25) return 50;
+    return 25;
+  }
+
   // --- Angel & Devil Messages ---
   const ANGEL_MESSAGES = {
     welcome: [
@@ -108,6 +116,36 @@
     ],
   };
 
+  // --- Tab-specific status messages ---
+  const TAB_MESSAGES = {
+    active: 'SOULS AWAIT JUDGMENT IN PURGATORY...',
+    heaven: 'WELL DONE, PURE SOUL! ASCENSION COMPLETE!',
+    cemetery: 'REST IN PEACE, LOST TASKS...',
+    reports: 'REVIEWING THE HARVEST OF SOULS...',
+  };
+
+  // --- Accolades / Badges ---
+  const ACCOLADES = [
+    { id: 'first_ascend', icon: '💀', name: 'First Blood', desc: 'Ascend your first soul', check: (s) => s.totalAscended >= 1 },
+    { id: 'fire_starter', icon: '🔥', name: 'Fire Starter', desc: 'Ascend 5 souls', check: (s) => s.totalAscended >= 5 },
+    { id: 'scroll_master', icon: '📜', name: 'Scroll Master', desc: 'Ascend 10 souls', check: (s) => s.totalAscended >= 10 },
+    { id: 'time_keeper', icon: '⌛', name: 'Time Keeper', desc: 'Keep a soul alive 24h', check: (s) => s.score >= 50 },
+    { id: 'sword_wielder', icon: '⚔️', name: 'Sword Wielder', desc: 'Reach 100 XP', check: (s) => s.score >= 100 },
+    { id: 'crown_bearer', icon: '👑', name: 'Crown Bearer', desc: 'Reach 200 XP', check: (s) => s.score >= 200 },
+    { id: 'moon_walker', icon: '🌑', name: 'Moon Walker', desc: 'Resurrect a soul', check: (s) => s.totalResurrected >= 1 },
+    { id: 'star_lord', icon: '🌟', name: 'Star Lord', desc: 'Reach 500 XP', check: (s) => s.score >= 500 },
+  ];
+
+  // --- Rank System ---
+  function getRank(score) {
+    if (score >= 500) return 'SOUL REAPER MASTER';
+    if (score >= 200) return 'ARCH SOUL WARDEN';
+    if (score >= 100) return 'SOUL WARDEN';
+    if (score >= 50) return 'APPRENTICE REAPER';
+    if (score >= 20) return 'SOUL NOVICE';
+    return 'LOST SOUL';
+  }
+
   // --- State ---
   let tasks = [];
   let score = 0;
@@ -128,10 +166,6 @@
     purgatoryTasks: $('#purgatoryTasks'),
     cemeteryGrid: $('#cemeteryGrid'),
     heavenGrid: $('#heavenGrid'),
-    activeCount: $('#activeCount'),
-    purgatoryCount: $('#purgatoryCount'),
-    cemeteryCount: $('#cemeteryCount'),
-    heavenCount: $('#heavenCount'),
     activeEmpty: $('#activeEmpty'),
     purgatoryEmpty: $('#purgatoryEmpty'),
     cemeteryEmpty: $('#cemeteryEmpty'),
@@ -142,6 +176,13 @@
     angelMessage: $('#angelMessage'),
     devilBubble: $('#devilBubble'),
     devilMessage: $('#devilMessage'),
+    statusMessage: $('#statusMessage'),
+    // Reports
+    totalAscended: $('#totalAscended'),
+    totalSacrificed: $('#totalSacrificed'),
+    decayChart: $('#decayChart'),
+    accoladesGrid: $('#accoladesGrid'),
+    rankDisplay: $('#rankDisplay'),
   };
 
   // --- Helpers ---
@@ -205,18 +246,18 @@
   function showAngel(message) {
     clearTimeout(angelTimeout);
     DOM.angelMessage.textContent = message;
-    DOM.angelBubble.classList.add('show');
+    DOM.angelBubble.classList.add('visible');
     angelTimeout = setTimeout(() => {
-      DOM.angelBubble.classList.remove('show');
+      DOM.angelBubble.classList.remove('visible');
     }, CONFIG.BUBBLE_DURATION);
   }
 
   function showDevil(message) {
     clearTimeout(devilTimeout);
     DOM.devilMessage.textContent = message;
-    DOM.devilBubble.classList.add('show');
+    DOM.devilBubble.classList.add('visible');
     devilTimeout = setTimeout(() => {
-      DOM.devilBubble.classList.remove('show');
+      DOM.devilBubble.classList.remove('visible');
     }, CONFIG.BUBBLE_DURATION);
   }
 
@@ -224,10 +265,6 @@
   function updateScore(delta) {
     score += delta;
     DOM.scoreValue.textContent = score;
-    // Animation class
-    const cls = delta > 0 ? 'score-up' : 'score-down';
-    DOM.scoreValue.classList.add(cls);
-    setTimeout(() => DOM.scoreValue.classList.remove(cls), 600);
     save();
   }
 
@@ -243,11 +280,16 @@
     DOM.tabContents.forEach(tc => {
       tc.classList.toggle('active', tc.id === `tab-${tabName}`);
     });
+
+    // Update status bar message
+    const msg = TAB_MESSAGES[tabName] || '';
+    if (msg && DOM.statusMessage) {
+      DOM.statusMessage.textContent = msg;
+    }
   }
 
   // --- Temperature / Heat System ---
   function getHeatLevel(task) {
-    // Returns 0.0 (frozen/dead) to 1.0 (just updated/hot)
     const now = Date.now();
     const elapsed = now - task.lastUpdatedAt;
     const totalLifespan = CONFIG.DEATH_MS;
@@ -262,18 +304,17 @@
   }
 
   function getHeatLabel(heat) {
-    if (heat > 0.75) return 'Hot';
-    if (heat > 0.5) return 'Warm';
-    if (heat > 0.25) return 'Cold';
-    return 'Freezing';
+    if (heat > 0.75) return 'BURNING';
+    if (heat > 0.5) return 'WARM';
+    if (heat > 0.25) return 'COLD';
+    return 'DYING';
   }
 
   function getHeatColor(heat) {
-    // Returns CSS color based on heat
-    if (heat > 0.75) return '#22c55e';
-    if (heat > 0.5) return '#f59e0b';
-    if (heat > 0.25) return '#3b82f6';
-    return '#ef4444';
+    if (heat > 0.75) return '#00cc44';
+    if (heat > 0.5) return '#ff9933';
+    if (heat > 0.25) return '#3399ff';
+    return '#ff3333';
   }
 
   // --- Task Lifecycle Check ---
@@ -315,7 +356,6 @@
         changed = true;
         somethingDied = true;
         updateScore(CONFIG.POINTS_DEATH);
-        // Clean up warnings for this task
         warnedTasks.delete(task.id + '_cool');
         warnedTasks.delete(task.id + '_cold');
       }
@@ -341,61 +381,50 @@
     const now = Date.now();
     const elapsed = now - task.lastUpdatedAt;
     const isActive = task.status === 'active';
-    const isPurgatory = task.status === 'purgatory';
     const heat = getHeatLevel(task);
     const heatPercent = Math.round(heat * 100);
     const heatEmoji = getHeatEmoji(heat);
     const heatLabel = getHeatLabel(heat);
     const heatColor = getHeatColor(heat);
-
-    const card = document.createElement('div');
-    card.className = `task-card ${isActive ? 'card-active' : 'card-purgatory'}`;
-    card.dataset.id = task.id;
-
-    // Death count badge
-    const deathBadge = task.deathCount ? `<span class="death-badge" title="Died ${task.deathCount} time(s)">💀×${task.deathCount}</span>` : '';
+    const xp = getXpForHeat(heat);
 
     // Time display
     let timerText = '';
-    let timerClass = '';
     if (isActive) {
       const msLeft = CONFIG.PURGATORY_MS - elapsed;
-      timerText = `⏱ ${timeLeft(msLeft)} left`;
-      if (msLeft < CONFIG.PURGATORY_MS * 0.3) timerClass = 'danger';
-      else if (msLeft < CONFIG.PURGATORY_MS * 0.6) timerClass = 'warning';
+      timerText = `${timeLeft(msLeft)} left`;
     } else {
       const msLeft = CONFIG.DEATH_MS - elapsed;
-      timerText = `💀 ${timeLeft(msLeft)} to death`;
-      timerClass = msLeft < (CONFIG.DEATH_MS - CONFIG.PURGATORY_MS) * 0.5 ? 'danger' : 'warning';
+      timerText = `${timeLeft(msLeft)} to death`;
     }
 
+    const card = document.createElement('div');
+    card.className = 'task-card';
+    card.dataset.id = task.id;
+
     card.innerHTML = `
-      <div class="task-status-icon">${heatEmoji}</div>
-      <div class="task-info">
-        <div class="task-title">${escapeHtml(task.title)} ${deathBadge}</div>
+      <span class="heat-emoji">${heatEmoji}</span>
+      <div style="flex:1;">
+        <div class="task-name">${escapeHtml(task.title)}</div>
         <div class="task-heat-gauge">
           <div class="heat-track">
-            <div class="heat-fill" style="width: ${heatPercent}%; background: ${heatColor}; box-shadow: 0 0 8px ${heatColor};"></div>
+            <div class="heat-fill" style="width: ${heatPercent}%; background: ${heatColor};"></div>
           </div>
-          <span class="heat-label" style="color: ${heatColor};">${heatLabel} ${heatPercent}%</span>
+          <span class="heat-label" style="color: ${heatColor};">${heatLabel}</span>
         </div>
-        <div class="task-meta">
-          <span class="task-timer ${timerClass}">${timerText}</span>
-          <span>Updated ${timeAgo(elapsed)}</span>
-        </div>
+        <div class="task-meta">${timerText} · Updated ${timeAgo(elapsed)}</div>
       </div>
+      <span class="xp-badge">+${xp} XP</span>
       <div class="task-actions">
-        <button class="task-action-btn btn-touch" title="Keep Alive (Touch)" data-action="touch">🔄</button>
-        <button class="task-action-btn btn-complete" title="Complete" data-action="complete">✅</button>
-        <button class="task-action-btn btn-delete" title="Kill" data-action="delete">💀</button>
+        <button class="task-btn complete-btn" data-action="complete" title="Ascend">ASCEND</button>
+        <button class="task-btn touch-btn" data-action="touch" title="Touch">🔄</button>
+        <button class="task-btn kill-btn" data-action="kill" title="Doom">DOOM</button>
       </div>
-      <div class="task-progress-bar" style="width: ${heatPercent}%; background: ${heatColor}; box-shadow: 0 0 6px ${heatColor};"></div>
     `;
 
-    // Event listeners
     card.querySelector('[data-action="touch"]').addEventListener('click', () => touchTask(task.id));
     card.querySelector('[data-action="complete"]').addEventListener('click', () => completeTask(task.id, card));
-    card.querySelector('[data-action="delete"]').addEventListener('click', () => killTask(task.id, card));
+    card.querySelector('[data-action="kill"]').addEventListener('click', () => killTask(task.id, card));
 
     return card;
   }
@@ -403,14 +432,11 @@
   function createTombstone(task) {
     const stone = document.createElement('div');
     stone.className = 'tombstone';
-    const deathTally = task.deathCount > 1 ? `<div class="tombstone-tally">Deaths: ${'☠️'.repeat(Math.min(task.deathCount, 5))} ${task.deathCount > 5 ? '+' + (task.deathCount - 5) : ''}</div>` : '';
     stone.innerHTML = `
-      <div class="tombstone-rip">R.I.P.</div>
-      <div class="tombstone-name">${escapeHtml(task.title)}</div>
-      <div class="tombstone-date">${formatDate(task.createdAt)} — ${formatDate(task.diedAt)}</div>
-      ${deathTally}
-      <div class="tombstone-points">${CONFIG.POINTS_DEATH} pts</div>
-      <button class="resurrect-btn" title="Resurrect this task">🔄 Resurrect</button>
+      <div class="tomb-name">${escapeHtml(task.title)}</div>
+      <div class="tomb-date">${formatDate(task.diedAt || task.createdAt)}</div>
+      <div class="tombstone-base"></div>
+      <button class="resurrect-btn" title="Resurrect">↺ RESURRECT</button>
     `;
     stone.querySelector('.resurrect-btn').addEventListener('click', () => resurrectTask(task.id));
     return stone;
@@ -418,12 +444,11 @@
 
   function createCloud(task) {
     const cloud = document.createElement('div');
-    cloud.className = 'cloud';
+    cloud.className = 'cloud-card';
     cloud.innerHTML = `
-      <div class="cloud-halo">✨</div>
-      <div class="cloud-name">${escapeHtml(task.title)}</div>
-      <div class="cloud-date">Ascended ${formatDate(task.completedAt)}</div>
-      <div class="cloud-points">+${CONFIG.POINTS_COMPLETE} pts</div>
+      <span class="cloud-name">${escapeHtml(task.title)}</span>
+      <span class="cloud-date">${formatDate(task.completedAt)}</span>
+      <span class="xp-badge">+${CONFIG.POINTS_COMPLETE * 10} XP</span>
     `;
     return cloud;
   }
@@ -439,6 +464,7 @@
     renderPurgatoryTasks();
     renderCemetery();
     renderHeaven();
+    renderReports();
     renderScore();
     updateCounts();
   }
@@ -447,10 +473,11 @@
     const activeTasks = tasks.filter(t => t.status === 'active');
     DOM.activeTasks.innerHTML = '';
     if (activeTasks.length === 0) {
-      DOM.activeTasks.appendChild(DOM.activeEmpty.cloneNode(true));
+      DOM.activeEmpty.style.display = '';
+      DOM.activeTasks.appendChild(DOM.activeEmpty);
       return;
     }
-    // Sort by most urgent first
+    DOM.activeEmpty.style.display = 'none';
     activeTasks.sort((a, b) => a.lastUpdatedAt - b.lastUpdatedAt);
     activeTasks.forEach(t => DOM.activeTasks.appendChild(createTaskCard(t)));
   }
@@ -459,7 +486,9 @@
     const purgatoryTasks = tasks.filter(t => t.status === 'purgatory');
     DOM.purgatoryTasks.innerHTML = '';
     if (purgatoryTasks.length === 0) {
-      DOM.purgatoryTasks.appendChild(DOM.purgatoryEmpty.cloneNode(true));
+      if (DOM.purgatoryEmpty) {
+        DOM.purgatoryEmpty.style.display = 'none';
+      }
       return;
     }
     purgatoryTasks.sort((a, b) => a.lastUpdatedAt - b.lastUpdatedAt);
@@ -470,9 +499,11 @@
     const deadTasks = tasks.filter(t => t.status === 'dead');
     DOM.cemeteryGrid.innerHTML = '';
     if (deadTasks.length === 0) {
-      DOM.cemeteryGrid.appendChild(DOM.cemeteryEmpty.cloneNode(true));
+      DOM.cemeteryEmpty.style.display = '';
+      DOM.cemeteryGrid.appendChild(DOM.cemeteryEmpty);
       return;
     }
+    DOM.cemeteryEmpty.style.display = 'none';
     deadTasks.sort((a, b) => (b.diedAt || 0) - (a.diedAt || 0));
     deadTasks.forEach(t => DOM.cemeteryGrid.appendChild(createTombstone(t)));
   }
@@ -481,11 +512,79 @@
     const completedTasks = tasks.filter(t => t.status === 'completed');
     DOM.heavenGrid.innerHTML = '';
     if (completedTasks.length === 0) {
-      DOM.heavenGrid.appendChild(DOM.heavenEmpty.cloneNode(true));
+      DOM.heavenEmpty.style.display = '';
+      DOM.heavenGrid.appendChild(DOM.heavenEmpty);
       return;
     }
+    DOM.heavenEmpty.style.display = 'none';
     completedTasks.sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
     completedTasks.forEach(t => DOM.heavenGrid.appendChild(createCloud(t)));
+  }
+
+  // --- Reports Rendering ---
+  function renderReports() {
+    const totalAscended = tasks.filter(t => t.status === 'completed').length;
+    const totalSacrificed = tasks.filter(t => t.status === 'dead').length;
+    const totalResurrected = tasks.filter(t => t.resurrectedAt).length;
+
+    // Stats
+    if (DOM.totalAscended) DOM.totalAscended.textContent = totalAscended;
+    if (DOM.totalSacrificed) DOM.totalSacrificed.textContent = totalSacrificed;
+
+    // Rank
+    if (DOM.rankDisplay) {
+      DOM.rankDisplay.textContent = `RANK: ${getRank(score)}`;
+    }
+
+    // Decay Velocity Chart (last 7 days of deaths)
+    if (DOM.decayChart) {
+      DOM.decayChart.innerHTML = '';
+      const now = Date.now();
+      const dayMs = 24 * 60 * 60 * 1000;
+      const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      let maxDeaths = 1;
+
+      // Count deaths per day for last 7 days
+      const deathsPerDay = [];
+      for (let i = 6; i >= 0; i--) {
+        const dayStart = now - (i * dayMs);
+        const dayEnd = dayStart + dayMs;
+        const count = tasks.filter(t =>
+          t.status === 'dead' && t.diedAt && t.diedAt >= dayStart && t.diedAt < dayEnd
+        ).length;
+        deathsPerDay.push(count);
+        if (count > maxDeaths) maxDeaths = count;
+      }
+
+      deathsPerDay.forEach((count, i) => {
+        const bar = document.createElement('div');
+        bar.className = 'decay-bar';
+        const h = Math.max(8, (count / maxDeaths) * 80);
+        const hue = count === 0 ? 120 : Math.max(0, 120 - (count / maxDeaths) * 120);
+        bar.style.height = h + 'px';
+        bar.style.background = `hsl(${hue}, 70%, 50%)`;
+        bar.title = `${count} deaths`;
+        DOM.decayChart.appendChild(bar);
+      });
+    }
+
+    // Accolades
+    if (DOM.accoladesGrid) {
+      DOM.accoladesGrid.innerHTML = '';
+      const stats = { totalAscended, totalSacrificed, totalResurrected, score };
+
+      ACCOLADES.forEach(acc => {
+        const unlocked = acc.check(stats);
+        const el = document.createElement('div');
+        el.className = `accolade ${unlocked ? '' : 'locked'}`;
+        el.title = acc.desc;
+        el.innerHTML = `
+          <span class="accolade-icon">${unlocked ? acc.icon : '🔒'}</span>
+          <span class="accolade-name">${acc.name}</span>
+        `;
+        DOM.accoladesGrid.appendChild(el);
+      });
+    }
   }
 
   function updateCounts() {
@@ -494,10 +593,26 @@
     const dead = tasks.filter(t => t.status === 'dead').length;
     const completed = tasks.filter(t => t.status === 'completed').length;
 
-    DOM.activeCount.textContent = active;
-    DOM.purgatoryCount.textContent = purgatory;
-    DOM.cemeteryCount.textContent = dead;
-    DOM.heavenCount.textContent = completed;
+    // Update tab labels with counts
+    DOM.tabBtns.forEach(btn => {
+      const tab = btn.dataset.tab;
+      const label = btn.querySelector('.tab-label');
+      if (!label) return;
+      if (tab === 'active') {
+        label.textContent = (active + purgatory) > 0 ? `Purgatory (${active + purgatory})` : 'Purgatory';
+      } else if (tab === 'heaven') {
+        label.textContent = completed > 0 ? `Ascended (${completed})` : 'Ascended';
+      } else if (tab === 'cemetery') {
+        label.textContent = dead > 0 ? `Cemetery (${dead})` : 'Cemetery';
+      }
+    });
+
+    // Update status bar
+    if (DOM.statusMessage) {
+      if (active + purgatory === 0 && dead === 0 && completed === 0) {
+        DOM.statusMessage.textContent = 'PURGATORY IS EMPTY! SUMMON A TASK TO BEGIN THE TORMENT!';
+      }
+    }
   }
 
   // --- Task Actions ---
@@ -532,7 +647,6 @@
 
     task.lastUpdatedAt = Date.now();
     task.status = 'active';
-    // Reset warnings for this task
     warnedTasks.delete(task.id + '_cool');
     warnedTasks.delete(task.id + '_cold');
     save();
@@ -550,9 +664,10 @@
     const task = tasks.find(t => t.id === id);
     if (!task) return;
 
-    // Animate
     if (cardEl) {
-      cardEl.classList.add('task-ascending');
+      cardEl.style.opacity = '0.5';
+      cardEl.style.transform = 'translateY(-20px)';
+      cardEl.style.transition = 'all 0.4s ease';
     }
 
     setTimeout(() => {
@@ -566,7 +681,7 @@
       setTimeout(() => {
         showDevil(randomFrom(DEVIL_MESSAGES.taskCompleted));
       }, 1500);
-    }, cardEl ? 600 : 0);
+    }, cardEl ? 400 : 0);
   }
 
   function killTask(id, cardEl) {
@@ -574,18 +689,21 @@
     if (!task) return;
 
     if (cardEl) {
-      cardEl.classList.add('task-dying');
+      cardEl.style.opacity = '0.3';
+      cardEl.style.transform = 'translateX(20px)';
+      cardEl.style.transition = 'all 0.4s ease';
     }
 
     setTimeout(() => {
       task.status = 'dead';
       task.diedAt = Date.now();
+      task.deathCount = (task.deathCount || 0) + 1;
       updateScore(CONFIG.POINTS_DEATH);
       save();
       renderAll();
 
       showDevil(randomFrom(DEVIL_MESSAGES.taskDead));
-    }, cardEl ? 600 : 0);
+    }, cardEl ? 400 : 0);
   }
 
   function resurrectTask(id) {

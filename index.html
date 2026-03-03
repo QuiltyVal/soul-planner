@@ -1,97 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Soul Planner — Gamified Task Manager</title>
-  <meta name="description" content="A gamified task planner where tasks live, decay into purgatory, die, or ascend to heaven.">
+  <meta name="description"
+    content="A gamified task planner where tasks live, decay into purgatory, die, or ascend to heaven.">
+  <meta name="theme-color" content="#e67e22">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <!-- Score Panel -->
+  <!-- Score Panel (Header) -->
   <div class="score-panel" id="scorePanel">
-    <div class="score-icon">⚡</div>
+    <div class="score-label"></div>
     <div class="score-value" id="scoreValue">0</div>
-    <div class="score-label">SOUL POINTS</div>
   </div>
 
   <!-- Main Container -->
   <div class="container">
-    <header class="app-header">
-      <h1 class="app-title">
-        <span class="title-icon">👻</span>
-        Soul Planner
-        <span class="title-icon">👻</span>
-      </h1>
-      <p class="app-subtitle">Keep your tasks alive... or let them perish</p>
-    </header>
 
     <!-- Tab Navigation -->
     <nav class="tab-nav" id="tabNav">
       <button class="tab-btn active" data-tab="active">
-        <span class="tab-icon">🔥</span>
-        <span class="tab-label">Active</span>
-      </button>
-      <button class="tab-btn" data-tab="cemetery">
-        <span class="tab-icon">🪦</span>
-        <span class="tab-label">Cemetery</span>
+        <span class="tab-label">Purgatory</span>
       </button>
       <button class="tab-btn" data-tab="heaven">
-        <span class="tab-icon">☁️</span>
-        <span class="tab-label">Heaven</span>
+        <span class="tab-label">Ascended</span>
+      </button>
+      <button class="tab-btn" data-tab="cemetery">
+        <span class="tab-label">Cemetery</span>
+      </button>
+      <button class="tab-btn" data-tab="reports">
+        <span class="tab-label">Reports</span>
       </button>
     </nav>
 
-    <!-- Active Tab -->
+    <!-- Active / Purgatory Tab -->
     <div class="tab-content active" id="tab-active">
       <!-- Active Zone -->
       <section class="zone zone-active">
-        <div class="zone-header">
-          <div class="zone-dot zone-dot-green"></div>
-          <h2>Active Zone</h2>
-          <span class="zone-count" id="activeCount">0</span>
-        </div>
         <div class="tasks-list" id="activeTasks">
           <div class="empty-state" id="activeEmpty">
-            <span class="empty-icon">✨</span>
-            <p>No active tasks. Add one below!</p>
+            <!-- Tombstone as empty state (like Variant 5) -->
+            <div class="empty-tombstone">
+              <span class="rip-text">RIP</span>
+              <span class="vacant-text">VACANT</span>
+            </div>
+            <p>> No souls detected...</p>
           </div>
         </div>
       </section>
 
-      <!-- Purgatory Zone -->
+      <!-- Purgatory Zone (decaying) -->
       <section class="zone zone-purgatory">
-        <div class="zone-header">
-          <div class="zone-dot zone-dot-amber"></div>
-          <h2>Purgatory</h2>
-          <span class="zone-count" id="purgatoryCount">0</span>
-        </div>
         <div class="tasks-list" id="purgatoryTasks">
-          <div class="empty-state" id="purgatoryEmpty">
-            <span class="empty-icon">😌</span>
-            <p>Purgatory is empty. Good job keeping tasks alive!</p>
+          <div class="empty-state" id="purgatoryEmpty" style="display:none;">
+            <p>No fading souls. Keep your tasks alive!</p>
           </div>
-        </div>
-      </section>
-
-      <!-- Add Task -->
-      <section class="zone zone-add">
-        <div class="add-task-row">
-          <input
-            type="text"
-            id="taskInput"
-            class="task-input"
-            placeholder="What's on your soul today?"
-            maxlength="100"
-            autocomplete="off"
-          >
-          <button class="add-btn" id="addBtn" title="Add Task">
-            <span class="add-btn-icon">+</span>
-          </button>
         </div>
       </section>
     </div>
@@ -99,54 +75,128 @@
     <!-- Cemetery Tab -->
     <div class="tab-content" id="tab-cemetery">
       <section class="zone zone-cemetery">
-        <div class="zone-header">
-          <div class="zone-dot zone-dot-gray"></div>
-          <h2>Cemetery</h2>
-          <span class="zone-count" id="cemeteryCount">0</span>
-        </div>
         <div class="cemetery-grid" id="cemeteryGrid">
           <div class="empty-state" id="cemeteryEmpty">
-            <span class="empty-icon">🪦</span>
-            <p>No fallen tasks... yet.</p>
+            <div class="empty-tombstone">
+              <span class="rip-text">RIP</span>
+              <span class="vacant-text">VACANT</span>
+            </div>
+            <p>> No souls detected...</p>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- Heaven Tab -->
+    <!-- Heaven / Ascended Tab -->
     <div class="tab-content" id="tab-heaven">
       <section class="zone zone-heaven">
-        <div class="zone-header">
-          <div class="zone-dot zone-dot-gold"></div>
-          <h2>Heaven</h2>
-          <span class="zone-count" id="heavenCount">0</span>
-        </div>
         <div class="heaven-grid" id="heavenGrid">
           <div class="empty-state" id="heavenEmpty">
-            <span class="empty-icon">👼</span>
-            <p>Complete tasks to send them to heaven!</p>
+            <div class="empty-tombstone ascended-empty">
+              <span class="rip-text">☁️</span>
+              <span class="vacant-text">EMPTY</span>
+            </div>
+            <p>> No souls ascended yet...</p>
           </div>
         </div>
       </section>
     </div>
+
+    <!-- Reports Tab -->
+    <div class="tab-content" id="tab-reports">
+      <div class="rank-display" id="rankDisplay">RANK: NOVICE SOUL</div>
+
+      <!-- Lifetime Harvest -->
+      <div class="report-card">
+        <div class="report-card-header">Lifetime Harvest</div>
+        <div class="report-card-body">
+          <div class="report-stats">
+            <div class="report-stat">
+              <div class="report-stat-label">Ascended</div>
+              <div class="report-stat-value green" id="totalAscended">0</div>
+            </div>
+            <div class="report-stat">
+              <div class="report-stat-label">Sacrificed</div>
+              <div class="report-stat-value red" id="totalSacrificed">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decay Velocity -->
+      <div class="report-card">
+        <div class="report-card-header">Decay Velocity <span style="float:right;font-size:0.4rem;opacity:0.6;">7
+            DAYS</span></div>
+        <div class="report-card-body">
+          <div class="decay-chart" id="decayChart"></div>
+        </div>
+      </div>
+
+      <!-- Accolades -->
+      <div class="report-card">
+        <div class="report-card-header">Accolades</div>
+        <div class="report-card-body">
+          <div class="accolades-grid" id="accoladesGrid"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Angel Helper -->
-  <div class="helper helper-angel" id="angelHelper">
-    <div class="speech-bubble angel-bubble" id="angelBubble">
-      <p id="angelMessage">Welcome! Let's get things done! 🌟</p>
+  <!-- Fixed Bottom Panel (Variant 5 style) -->
+  <div class="bottom-panel">
+    <!-- Status message bar -->
+    <div class="status-bar" id="statusBar">
+      <p id="statusMessage">PURGATORY IS EMPTY! SUMMON A TASK TO BEGIN THE TORMENT!</p>
     </div>
-    <div class="helper-avatar angel-avatar" id="angelAvatar">😇</div>
-  </div>
 
-  <!-- Devil Helper -->
-  <div class="helper helper-devil" id="devilHelper">
-    <div class="speech-bubble devil-bubble" id="devilBubble">
-      <p id="devilMessage">I'm watching your tasks... 😈</p>
+    <!-- Characters row: Devil on left, Angel on right -->
+    <div class="characters-row">
+      <div class="character character-devil" id="devilHelper">
+        <div class="speech-bubble devil-bubble" id="devilBubble">
+          <p id="devilMessage">Your tasks await judgment...</p>
+        </div>
+        <div class="helper-avatar devil-avatar" id="devilAvatar">
+          <svg viewBox="0 0 48 48" width="48" height="48" fill="none">
+            <path d="M12 16 L18 8 L18 18" fill="#cc0000" />
+            <path d="M36 16 L30 8 L30 18" fill="#cc0000" />
+            <circle cx="24" cy="26" r="12" fill="#cc2200" stroke="#880000" stroke-width="2" />
+            <circle cx="20" cy="24" r="2" fill="#fff" />
+            <circle cx="28" cy="24" r="2" fill="#fff" />
+            <path d="M20 30 Q24 34 28 30" stroke="#fff" stroke-width="1.5" fill="none" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="character character-angel" id="angelHelper">
+        <div class="speech-bubble angel-bubble" id="angelBubble">
+          <p id="angelMessage">Keep going, weary soul!</p>
+        </div>
+        <div class="helper-avatar angel-avatar" id="angelAvatar">
+          <svg viewBox="0 0 48 48" width="48" height="48" fill="none">
+            <ellipse cx="24" cy="8" rx="8" ry="3" fill="none" stroke="#ffdd44" stroke-width="2" />
+            <circle cx="24" cy="24" r="12" fill="#f0f0f0" stroke="#ccc" stroke-width="2" />
+            <circle cx="20" cy="22" r="2" fill="#333" />
+            <circle cx="28" cy="22" r="2" fill="#333" />
+            <path d="M20 28 Q24 32 28 28" stroke="#333" stroke-width="1.5" fill="none" />
+          </svg>
+        </div>
+      </div>
     </div>
-    <div class="helper-avatar devil-avatar" id="devilAvatar">😈</div>
+
+    <!-- Input row -->
+    <div class="add-task-row">
+      <input type="text" id="taskInput" class="task-input" placeholder="> Enter soul task..." maxlength="100"
+        autocomplete="off">
+      <button class="add-btn" id="addBtn" title="Summon"></button>
+    </div>
   </div>
 
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => { });
+    }
+  </script>
 </body>
+
 </html>

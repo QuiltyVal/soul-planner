@@ -1,0 +1,22 @@
+{
+  "name": "Soul Planner",
+  "short_name": "Soul Planner",
+  "description": "Gamified task manager — souls, purgatory, heaven & hell",
+  "start_url": "/soul-planner/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#e67e22",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
